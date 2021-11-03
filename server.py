@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 # Copyright 2013 Abram Hindle
-# 
+# Copyright 2021 Kanishk Chawla
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -74,27 +75,47 @@ def flask_post_json():
 @app.route("/")
 def hello():
     '''Return something coherent here.. perhaps redirect to /static/index.html '''
-    return None
+    # Answer by Xavier Combelle(Jan 15'13):
+    # https://stackoverflow.com/questions/14343812/redirecting-to-url-in-flask
+    return flask.redirect("/static/index.html")
+    # return None
 
 @app.route("/entity/<entity>", methods=['POST','PUT'])
 def update(entity):
     '''update the entities via this interface'''
-    return None
+    data = flask_post_json()
+
+    for key, val in data.items():
+        myWorld.update(entity, key, val)
+    
+    # build response, so first turn the data to send as a json
+    # https://www.geeksforgeeks.org/how-to-convert-python-dictionary-to-json/
+    responseData = json.dumps(myWorld.get(entity))
+    
+    # then use that json to send the response. Example 15 of:
+    # https://www.programcreek.com/python/example/51515/flask.Response
+    response = flask.Response(response=responseData, status=200, mimetype="application/json")
+    return response
 
 @app.route("/world", methods=['POST','GET'])    
 def world():
     '''you should probably return the world here'''
-    return None
+    responseWorld = json.dumps(myWorld.world())
+
+    response = flask.Response(response=responseWorld, status=200, mimetype="application/json")
+    return response
 
 @app.route("/entity/<entity>")    
 def get_entity(entity):
     '''This is the GET version of the entity interface, return a representation of the entity'''
-    return None
+    return json.dumps(myWorld.get(entity))
 
 @app.route("/clear", methods=['POST','GET'])
 def clear():
     '''Clear the world out!'''
-    return None
+    myWorld.clear()
+
+    return json.dumps(myWorld.world())
 
 if __name__ == "__main__":
     app.run()

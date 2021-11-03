@@ -39,7 +39,10 @@ function sendJSONXMLHTTPRequest(url, objects, callback) {
             try {
                 if (xhr.status==200) {
                     //XXX: parse some JSON from the request!
-                    //XXX: Pass the data to the callback!
+                    let data = JSON.parse(xhr.responseText);
+                    
+                    //XXX: Pass the data to the callback! 
+                    callback(data);
                 }
             } 
             catch(e) {
@@ -50,6 +53,16 @@ function sendJSONXMLHTTPRequest(url, objects, callback) {
     //XXX: POST to a URL
     //XXX: set the mimetype and the accept headers!
     // Remember to use application/json !
+
+    // https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Using_XMLHttpRequest
+    xhr.open("POST", url, true);
+
+    // https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/setRequestHeader
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.setRequestHeader("Accept", "application/json");
+
+    // send the data
+    xhr.send(JSON.stringify(objects));
 }
 
 
@@ -62,11 +75,15 @@ function drawCircle(context,entity) {
         lineWidth = 3;
         var x = entity["x"];
         var y = entity["y"];
-        //moveTo(x,y);
+        
+        moveTo(x,y);
         fillStyle = entity["colour"];
         strokeStyle = fillStyle;
         arc(x, y, (entity["radius"])?entity["radius"]:50, 0, 2.0 * Math.PI, false);  
-        stroke();                                
+        // stroke();
+
+        // https://www.w3schools.com/tags/canvas_arc.asp 
+        fill();
     }
 }
 
@@ -86,7 +103,6 @@ function clearFrame() {
 	fillStyle = "#000";
 	fillRect(0,0,W,H);
     }
-
 }
 
 // This actually draws the frame
@@ -138,7 +154,8 @@ function addEntity(entity, data) {
     world[entity] = data;
     drawNextFrame(); // (but should we?)
     //XXX: Send a XHTML Request that updates the entity you just  modified!
-
+    let url = "http://" + host + ":5000/entity/" + String(entity);
+    sendJSONXMLHTTPRequest(url, data, drawCircle(context, data));
 }
 
 var counter = 0;
@@ -246,30 +263,34 @@ mouse = (function() {
 
 // Add the application specific mouse listeners!
 //XXX: TODO Make these prettier!
+// Answer by ZPiDER Mar 19'11
+// https://stackoverflow.com/questions/1484506/random-color-generator
 mouse.mousedowners.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'blue'});
+    addEntityWithoutName({'x':x,'y':y,'colour':"#" + ((1<<24)*Math.random() | 0).toString(16)});
 });
 
 mouse.mouseuppers.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'red'});
+    addEntityWithoutName({'x':x,'y':y,'colour':"#" + ((1<<24)*Math.random() | 0).toString(16)});
 });
 
 mouse.mousedraggers.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'green',
+    addEntityWithoutName({'x':x,'y':y,'colour':"#" + ((1<<24)*Math.random() | 0).toString(16),
                           'radius':10});
 });
 
-
 function update() {
-    //XXX: TODO Get the world from the webservice using a XMLHTTPRequest
     drawFrame();
+
+    //XXX: TODO Get the world from the webservice using a XMLHTTPRequest
+    let url = "http://" + host + ":5000/world"
+    sendJSONXMLHTTPRequest(url, null, function(newWorld) {
+        world = newWorld;
+        drawNextFrame();
+    });
 }
 
 // 30 frames per second
-setInterval( update, 1000/30.0);
-
-
-
+setInterval(update, 1000/30.0);
     </script>
 </body>
 </html>
