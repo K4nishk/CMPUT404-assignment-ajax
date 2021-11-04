@@ -80,10 +80,10 @@ function drawCircle(context,entity) {
         fillStyle = entity["colour"];
         strokeStyle = fillStyle;
         arc(x, y, (entity["radius"])?entity["radius"]:50, 0, 2.0 * Math.PI, false);  
-        // stroke();
+        stroke();
 
         // https://www.w3schools.com/tags/canvas_arc.asp 
-        fill();
+        // fill();
     }
 }
 
@@ -132,7 +132,6 @@ function drawFrame() {
 
 // This is unpleasent, canvas clicks are not handled well
 // So use this code, it works well on multitouch devices as well.
-
 function getPosition(e) {
 	if ( e.targetTouches && e.targetTouches.length > 0) {
 		var touch = e.targetTouches[0];
@@ -149,20 +148,23 @@ function getPosition(e) {
 	}
 }
 
-
 function addEntity(entity, data) {
     world[entity] = data;
-    drawNextFrame(); // (but should we?)
     //XXX: Send a XHTML Request that updates the entity you just  modified!
-    let url = "http://" + host + ":5000/entity/" + String(entity);
-    sendJSONXMLHTTPRequest(url, data, drawCircle(context, data));
+    let url = "http://" + location.host + "/entity/" + String(entity);
+    sendJSONXMLHTTPRequest(url, data, function(someData) {
+        // Act as the callback function but do nothing
+    });
+    drawNextFrame(); // (but should we?)
 }
 
+var cFlag = false;
 var counter = 0;
 function addEntityWithoutName(data) {
     //var name = "X"+Math.floor((Math.random()*100)+1);
     var name = "X"+(counter++)%100;
     addEntity(name,data);
+    cFlag = true;
 }
 
 // canvas + mouse/touch is complicated 
@@ -266,27 +268,35 @@ mouse = (function() {
 // Answer by ZPiDER Mar 19'11
 // https://stackoverflow.com/questions/1484506/random-color-generator
 mouse.mousedowners.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':"#" + ((1<<24)*Math.random() | 0).toString(16)});
+    addEntityWithoutName({'x':x,'y':y,'colour':"red"});
+    // addEntityWithoutName({'x':x,'y':y,'colour':"#" + ((1<<24)*Math.random() | 0).toString(16)});
 });
 
 mouse.mouseuppers.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':"#" + ((1<<24)*Math.random() | 0).toString(16)});
+    addEntityWithoutName({'x':x,'y':y,'colour':"blue"});
+    // addEntityWithoutName({'x':x,'y':y,'colour':"#" + ((1<<24)*Math.random() | 0).toString(16)});
 });
 
 mouse.mousedraggers.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':"#" + ((1<<24)*Math.random() | 0).toString(16),
-                          'radius':10});
+    addEntityWithoutName({'x':x,'y':y,'colour':"green"});
+    // addEntityWithoutName({'x':x,'y':y,'colour':"#" + ((1<<24)*Math.random() | 0).toString(16),
+                          // 'radius':10});
 });
 
 function update() {
-    drawFrame();
 
-    //XXX: TODO Get the world from the webservice using a XMLHTTPRequest
-    let url = "http://" + host + ":5000/world"
-    sendJSONXMLHTTPRequest(url, null, function(newWorld) {
-        world = newWorld;
-        drawNextFrame();
-    });
+    if (cFlag === true) {
+        //XXX: TODO Get the world from the webservice using a XMLHTTPRequest
+        let url = "http://" + location.host + "/world";
+        sendJSONXMLHTTPRequest(url, null, function(newWorld) {
+            console.log("hello");
+            world = newWorld;
+            drawNextFrame();
+        });
+        
+        cFlag = false;
+    }
+    drawFrame();
 }
 
 // 30 frames per second
