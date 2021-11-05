@@ -30,7 +30,6 @@ var host = window.location.host;
 var context = canvas.getContext("2d");
 var W = canvas.width  = window.innerWidth-6;
 var H = canvas.height = window.innerHeight-50;
-var cFlag = true;
 
 function sendJSONXMLHTTPRequest(url, objects, callback) {
     var xhr = new XMLHttpRequest();
@@ -156,8 +155,6 @@ function getPosition(e) {
 }
 
 function addEntity(entity, data) {
-    cFlag = true;
-    
     world[entity] = data;
     //XXX: Send a XHTML Request that updates the entity you just  modified!
     let url = "http://" + location.host + "/entity/" + String(entity);
@@ -297,17 +294,12 @@ mouse.mousedraggers.push(function(x,y,clicked,e) {
 function update() {
 
     drawFrame();
-
-    if (cFlag === true) {
-        //XXX: TODO Get the world from the webservice using a XMLHTTPRequest
-        let url = "http://" + location.host + "/world";
-        sendJSONXMLHTTPRequest(url, null, function(newWorld) {
-            world = newWorld;
-            drawNextFrame();
-        });
-
-        cFlag = false;
-    }
+    //XXX: TODO Get the world from the webservice using a XMLHTTPRequest
+    let url = "http://" + location.host + "/world";
+    sendJSONXMLHTTPRequest(url, null, function(newWorld) {
+        world = newWorld;
+        drawNextFrame();
+    });
 
 }
 
